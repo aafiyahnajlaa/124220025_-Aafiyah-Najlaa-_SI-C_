@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:responsi_124220025/HomePage.dart';
+import 'package:responsi_124220025/ListRestaurant.dart';
 import 'package:responsi_124220025/main.dart';
 import 'package:responsi_124220025/service/Shared_Preferences.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -14,8 +15,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
    final username_controller = TextEditingController();
    final password_controller = TextEditingController();
-   late SharedPreferences logindata;
-   late bool newuser;
+   late SharedPreferences _logindata;
+   late bool _newuser;
    @override
   void initState() {
     super.initState();
@@ -24,18 +25,17 @@ class _LoginPageState extends State<LoginPage> {
     check_if_already_login();
   }
   Future<void> check_if_already_login() async {
-     logindata = await SharedPreferences.getInstance();
-     newuser = (logindata.getBool('login')?? true);
-     print(newuser);
-     if(newuser == false){
+     _logindata = await SharedPreferences.getInstance();
+     _newuser = (_logindata.getBool('login')?? true);
+     print(_newuser);
+     if(_newuser == false){
        Navigator.pushReplacement(
-           context, new MaterialPageRoute(builder: (context)=> MyHomePage(title: 'Home Page',)));
+           context, new MaterialPageRoute(builder: (context)=> RestaurantListPage(username: _username)));
      }
   }
 
   //inisiasi state
-  String username = '';
-  String? nickname;
+  String _username = '';
   String password = '';
   bool isVisible = false;
   bool isClicked = false;
@@ -43,16 +43,17 @@ class _LoginPageState extends State<LoginPage> {
 
 
   //function redirect
-  _navigateToHome() async {
-    //fungsinya ga beraturan
-    await Future.delayed(Duration(seconds: 3));
+   Future<void> _navigateToHome() async {
+     // Simpan informasi login di SharedPreferences
+     await _logindata.setBool('login', true);
+     await _logindata.setString('username', _username);
 
-    var push = Navigator.push(
-        context,
-        MaterialPageRoute(
-            builder: (context) =>
-                HomePage(username: username, nickname: nickname)));
-  }
+     // Navigasi ke halaman list restaurant
+     Navigator.pushReplacement(
+       context,
+       MaterialPageRoute(builder: (context) => RestaurantListPage(username: _username)),
+     );
+   }
 
   @override
   Widget build(BuildContext context) {
@@ -60,10 +61,14 @@ class _LoginPageState extends State<LoginPage> {
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.blueGrey,
+          centerTitle: true,
           title: Text("Login Page"),
         ),
         body: Column(
           children: [
+            SizedBox(height: 20),
+            Image.asset('images.jpeg'),
+            SizedBox(height: 20),
             _usernameField(),
             _passwordField(),
             _loginButton(context),
@@ -78,7 +83,7 @@ class _LoginPageState extends State<LoginPage> {
       padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
       child: TextFormField(
         onChanged: (value) {
-          username = value;
+          _username = value;
         },
         decoration: InputDecoration(
             hintText: 'Username',
@@ -123,7 +128,7 @@ class _LoginPageState extends State<LoginPage> {
       width: MediaQuery.of(context).size.width,
       child: ElevatedButton(
         onPressed: () async {
-          Future<bool> loginSuccess = authServices.Login(username, password);
+          Future<bool> loginSuccess = authServices.Login(_username, password);
           if ( await loginSuccess) {
             _navigateToHome();
             //tampilkan pesan sukses
@@ -150,6 +155,10 @@ class _LoginPageState extends State<LoginPage> {
             });
           }
         },
+        style: ButtonStyle(
+          backgroundColor: WidgetStateProperty.all(Colors.blueGrey),
+          foregroundColor: WidgetStateProperty.all(Colors.white),
+        ),
         child: Text("Login"),
       ),
     );
